@@ -17,6 +17,8 @@ class View(ft.UserControl):
         self.btn_hello = None
         self.txt_result = None
         self.txt_container = None
+        self._ddLUN = None
+        self._btnRicerca = None
 
     def load_interface(self):
         # title
@@ -39,11 +41,13 @@ class View(ft.UserControl):
         self._page.controls.append(ft.Row([self._btnAnalizzaOggetti, self._txtIdOggetto, self._btnCompConnessa],
                                           alignment=ft.MainAxisAlignment.CENTER))
 
-        # List View where the reply is printed
-        self.txt_result = ft.ListView(expand=1, spacing=10, padding=20, auto_scroll=True)
-        self._page.controls.append(self.txt_result)
-        self._page.update()
 
+        self._ddLUN = ft.Dropdown(label="Lunghezza")
+        self._btnRicerca = ft.ElevatedButton(text="Cerca oggetti", on_click=self._controller.handleRicerca)
+
+        row2 = ft.Row([self._ddLUN, self._btnRicerca])
+
+        self._page.controls.append(row2)
     @property
     def controller(self):
         return self._controller

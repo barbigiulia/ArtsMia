@@ -1,3 +1,5 @@
+import copy
+
 import networkx as nx
 from database.DAO import DAO
 
@@ -9,8 +11,45 @@ class Model:
         self.idMap_ArtObjects = { }
         for n in self._nodes:
             self.idMap_ArtObjects[n.object_id] = n
+        self._optPath = []
+        self._optCost = 0
 
-    def getInfoConnessa(self, id_oggetto):  # gli devo passare un id dell'oggetto
+    def getOptPath(self, source, lun):
+        parziale = [source]
+        for n in self._grafo.neighbors(source):
+            if n.classification== parziale[-1].classification:
+                parziale.append(n)
+                self.ricorsione(parziale, lun)
+                parziale.pop() # backtracking
+        return self._optPath, self._optCost
+
+    def ricorsione(self, parziale, lun):
+        if len(parziale) == lun:
+            # verifico che la parziale si meglio del mio best (ottimalità)
+            if self.costoPath(parziale) > self._optCost:
+                self._optCost = self.costoPath(parziale)
+                self._optPath = copy.deepcopy(parziale) # fai sempre la copia profonda della soluzione
+            return # in ogni caso devo uscire
+
+        # len(parziale) non è ancora uguale a LUN , posso ancora aggiungere nodi
+        for n in self._grafo.neighbors(parziale[-1]):
+            # ciclo sui vicini dell'ultimo nodo aggiunto
+            if parziale[-1].classification == n.classification:
+                parziale.append(n)
+                self.ricorsione(parziale, lun)
+                parziale.pop()  # backtracking
+
+
+    def costoPath(self, path):
+        # calcola la somma dei pesi
+        tot=0
+        for i in range(0, len(path)-1):
+            tot+= self._grafo[path[i]][path[i+1]]["weight"]
+            # [nodoPartenza][nodoArrivo][peso]
+        return tot
+
+
+    def getInfoConnessa(self, id_oggetto):        # gli devo passare un id dell'oggetto
         # cerca la componente connessa che contiene id_oggetto
         # guardo nella documentazione di depth-first-search
         if  not self.hasNode(id_oggetto): # id_oggetto potrebbe non essere contenuto nel grafo....
@@ -63,7 +102,8 @@ class Model:
             self._grafo.add_edge(e.o1, e.o2, weight=e.peso)
             # creo un arco che parte da o1 e finisce in o2
 
-
+    def getNodeFromId(self, id_oggetto):
+        return self.idMap_ArtObjects[id_oggetto]
 
     # ======================NUMERO DI ARCHI E NODI ==============================
     def getNumNodes(self):
